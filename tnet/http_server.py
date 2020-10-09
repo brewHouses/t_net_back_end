@@ -358,6 +358,9 @@ def predict_http(image_raw):
     sobel_img = sobel(image_raw)
     laplacian_img = laplacian(image_raw)
 
+    # 将图像转换成灰度图像
+    image_raw = cv2.cvtColor(image_raw, cv2.COLOR_BGR2GRAY)
+    image_raw = cv2.cvtColor(image_raw, cv2.COLOR_GRAY2BGR)
     trans = transforms.ToTensor()
     imgs_raw = trans(image_raw).type(Tensor).view(1,3,256,256)
     roberts_img = trans(roberts_img).type(Tensor).view(1,1,256,256)
