@@ -34,7 +34,30 @@ def ground_truth():
     data_encode = np.array(img_encode)
     str_encode = data_encode.tostring()
     return str_encode
-    
+
+# 通过methods设置POST请求
+@app.route('/ground_truth_bin', methods=["POST"])
+def ground_truth_bin():
+    img_ret = gen_mask_data.gen_mask_bin(request.form['filename'], labels[request.form['filename']], (256, 256), channels=5)
+    if img_ret is None:
+        return "The file {} has no label data".format(input_file.filename)
+
+    img = None
+    for i in range(5):
+        if img is None:
+            img = img_ret[:, :, 0]
+        else:
+            img = np.hstack((img, img_ret[:, :, i]))
+
+    img_ret = img
+    print(img_ret.shape)
+
+    # 将图片格式转码成数据流, 放到内存缓存中
+    img_encode = cv2.imencode('.jpg', img_ret)[1]
+    data_encode = np.array(img_encode)
+    str_encode = data_encode.tostring()
+    return str_encode
+
     '''
     # 这个是用来base64编码, 用在浏览器里
     return send_file(
@@ -47,5 +70,3 @@ def ground_truth():
 
 if __name__ == '__main__':
     app.run(host = '0.0.0.0', debug=True)
-
-

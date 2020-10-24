@@ -59,6 +59,19 @@ def _trans_points(frame:'numpy.array', points:'list') -> 'list':
         ret.append(tmp_ret)
     return ret
 
+def _trans_points_bin(shape, points:'list') -> 'list':
+    '''
+    将百分比表示的位置转换像素成表示的位置
+    '''
+    ret = []
+    rows, cols = shape
+    for point in points:
+        tmp_ret = []
+        tmp_ret.append(int(int(point[0]) * cols / 100))
+        tmp_ret.append(int(int(point[1]) * rows / 100))
+        ret.append(tmp_ret)
+    return ret
+
 def _gen_black_img(img):
     '''
     根据输入的img的大小, 生成完全一致大小的黑色mask底片
@@ -139,6 +152,49 @@ def get_ground_truth(raw_img, file_name, label):
             img = mask_img[:, :, i]
             raw_img[img>0] = raw_img[img>0]*0.6 + np.array(colors[i])*0.4
     return raw_img
+
+def gen_mask_bin(img_name, marks, img_shape, show_flag=False, channels=5):
+    ret = None
+    '''
+    img = cv2.imread(img_name)
+    if img is None:
+        print('66666666666666666666666666666666'+img_name)
+        return
+    '''
+    #img = cv2.resize(img, (256, 256))
+    shape = img_shape
+    for mark in marks.values():
+        mark = _trans_points_bin(shape, mark)
+        tmp_img = cv2.fillPoly(np.zeros(shape, np.uint8), np.array([mark], np.int32), (255))
+        if ret is None:
+            ret = tmp_img
+        else:
+            ret = np.vstack((ret, tmp_img))
+    ret = ret.reshape(-1, shape[0], shape[1])
+    if channels == 6:
+        tmp_ret = None
+        for img in ret:
+            if tmp_ret is None:
+                tmp_ret = img
+            else:
+                tmp_ret = tmp_ret | img
+        tmp_ret = ~tmp_ret
+        ret = ret.reshape(-1, shape[1])
+        ret = np.vstack((ret, tmp_ret))
+        ret = ret.reshape(-1, shape[0], shape[1])
+
+    ret = np.rollaxis(ret, 0, 3)
+    '''
+    print('6666666666666666666666666')
+    print(ret.shape)
+    '''
+    if show_flag:
+        for img in ret:
+            cv2.imshow('ret', img)
+            key = cv2.waitKey(0)
+            if key == ord('q'):
+                sys.exit(0)
+    return ret
 
 
 
